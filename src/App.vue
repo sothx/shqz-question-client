@@ -1,22 +1,233 @@
 <script setup lang="ts">
-// This starter template is using Vue 3 <script setup> SFCs
-// Check out https://vuejs.org/api/sfc-script-setup.html#script-setup
-// import HelloWorld from './components/HelloWorld.vue'
+import { ref, getCurrentInstance, onMounted, reactive, watch } from 'vue'
+import * as QuetionsApi from '@/apis/quetions'
+import * as UsersApi from '@/apis/users'
+import * as Helper from '@/utils/Helper'
+import { ipcRenderer } from 'electron'
+import _ from 'lodash-es'
+
+import type { Action } from 'element-plus'
+
+const currentData = reactive({
+  page: {
+    limit: 20,
+    current: 1,
+    total: 0
+  },
+  tableLoading: true,
+  searchString: '',
+  firstRadio: 1,
+  secondRadio: 1,
+  questionList: []
+})
+
+const { proxy } = getCurrentInstance()!
+
+const { $to, $message, $alert, $packageJSON, $confirm } = proxy!;
+
+const versionData = reactive({
+  currentVersion: $packageJSON.version,
+  canCancel: true,
+  updateVersionMessage: {}
+});
+
+const initClientUpdate = () => {
+  const updateVersionMessage: any = versionData.updateVersionMessage;
+  const compareVersionRes = Helper.compareVersion(
+    versionData.currentVersion,
+    updateVersionMessage.versionNum
+  )
+  switch (compareVersionRes) {
+    // 版本号相同，已经是最新版本，不需要升级
+    case 0: {
+      break;
+    }
+    // 接口版本号比较旧，不需要升级版本
+    case 1: {
+      break;
+    }
+    // 接口版本号更新，需要升级版本
+    case -1: {
+      const getLocalUpdateMsg = localStorage.getItem(`skipUpdateVersion`)
+      if (getLocalUpdateMsg === `${updateVersionMessage.versionNum}`) {
+        return;
+      }
+      $confirm(
+        updateVersionMessage.desc,
+        `客户端版本升级提醒`,
+        {
+          dangerouslyUseHTMLString: true,
+          showCancelButton: versionData.canCancel,
+          closeOnClickModal: false,
+          closeOnPressEscape: false,
+          showClose: false,
+          cancelButtonText: '跳过当前版本',
+          confirmButtonText: '立即下载',
+          beforeClose: (action, instance, done) => {
+            console.log(instance, 'instance')
+            if (action === 'confirm') {
+              ipcRenderer.send('open-url', updateVersionMessage.downloadUrl)
+              return;
+            }
+            if (action === 'cancel') {
+              localStorage.setItem(`skipUpdateVersion`, updateVersionMessage.versionNum)
+              done()
+              return;
+            }
+            done()
+          }
+        }
+      )
+      break;
+    }
+  }
+}
+
+
+
+
+onMounted(async () => {
+  try {
+    await Promise.all([
+      getVersionMessage(),
+      getQuestionList({
+        type: currentData.firstRadio,
+        limit: currentData.page.limit,
+        offset: currentData.page.current - 1
+      })
+    ])
+  } catch (err: Error) {
+    $alert('网络连接异常，请检查网络连接是否正常！', '网络异常', {
+      confirmButtonText: '刷新重试',
+      showClose: false,
+      callback: (action: Action) => {
+        window.location.reload()
+      }
+    })
+    throw new Error(err?.message);
+  }
+})
+
+const getVersionMessage = async () => {
+  const [resErr, res] = await $to(UsersApi.getQuestionClientBersion())
+  if (resErr) {
+    throw new Error(resErr.message);
+  }
+  switch ((res as any).statusCode) {
+    case '000000': {
+      versionData.updateVersionMessage = res.data;
+      initClientUpdate()
+      break;
+    }
+    default: {
+      $message.error('获取客户端升级信息失败！')
+      break;
+    }
+  }
+}
+
+const getQuestionList = async (inputQuery: QuetionsApi.IQuestionListQuery) => {
+  currentData.tableLoading = true
+  const [resErr, res] = await $to(QuetionsApi.getQuestionList(inputQuery))
+  if (resErr) {
+    // $message.error('获取题库列表失败！')
+    throw new Error(resErr.message);
+  }
+
+  switch ((res as any).statusCode) {
+    case '000000': {
+      currentData.tableLoading = false
+      currentData.questionList = res.data.rows;
+      currentData.page.total = res.data.count;
+      break;
+    }
+    default: {
+      $message.error('获取题库列表失败！')
+      break;
+    }
+  }
+}
+
+const reflushQuetionList = () => {
+  getQuestionList({
+    type: currentData.firstRadio,
+    limit: currentData.page.limit,
+    offset: currentData.page.current - 1,
+    queryString: currentData.searchString,
+    ...currentData.firstRadio === 5 ? {
+      heroType: currentData.secondRadio
+    } : null,
+  })
+}
+
+const updateCurrentPage = (currentPage: number) => {
+  currentData.page.current = currentPage;
+  reflushQuetionList()
+}
+
+watch([() => currentData.firstRadio, () => currentData.secondRadio], ([firstRadio, secondRadio]) => {
+  currentData.page.current = 1;
+  currentData.searchString = '';
+  reflushQuetionList()
+})
+
+const handleSearch = _.debounce(() => {
+  currentData.page.current = 1;
+  reflushQuetionList()
+}, 200)
 </script>
 
 <template>
-  <!-- <div class="logo-box">
-    <img style="height:140px;" src="./assets/electron.png" >
-    <span/>
-    <img style="height:140px;" src="./assets/vite.svg" >
-    <span/>
-    <img style="height:140px;" src="./assets/vue.png" >
+  <div class="common-layout">
+    <el-container>
+      <el-header>
+        <div class="common-header">
+          <img src="./assets/images/logo.png" />
+        </div>
+      </el-header>
+      <el-main>
+        <div class="common-main">
+          <div>
+            <el-radio-group v-model="currentData.firstRadio">
+              <el-radio-button :label="1">乡试</el-radio-button>
+              <el-radio-button :label="2">会试</el-radio-button>
+              <el-radio-button :label="3">屈原寻梦</el-radio-button>
+              <el-radio-button :label="4">赛龙舟</el-radio-button>
+              <el-radio-button :label="5">侠义情缘</el-radio-button>
+              <el-radio-button :label="6">召唤兽转生</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div>
+            <el-radio-group v-show="currentData.firstRadio === 5" class="mt20" size="small"
+              v-model="currentData.secondRadio">
+              <el-radio-button :label="1">宋江</el-radio-button>
+              <el-radio-button :label="2">关胜</el-radio-button>
+              <el-radio-button :label="3">杨志</el-radio-button>
+              <el-radio-button :label="4">徐宁</el-radio-button>
+              <el-radio-button :label="5">柴进</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div class="mt20">
+            <el-input @input="handleSearch" v-model="currentData.searchString" placeholder="请输入题目任意关键字" clearable>
+            </el-input>
+          </div>
+          <div class="mt20">
+            <el-table v-loading="currentData.tableLoading" :data="currentData.questionList" stripe empty-text="结果为空">
+              <el-table-column prop="title" label="题目">
+              </el-table-column>
+              <el-table-column prop="answer" label="答案">
+              </el-table-column>
+            </el-table>
+            <div class="mt20">
+              <el-pagination @update:current-page="updateCurrentPage" :default-page-size="currentData.page.limit"
+                :current-page="currentData.page.current" background layout="prev, pager, next"
+                :total="currentData.page.total" />
+            </div>
+          </div>
+        </div>
+      </el-main>
+    </el-container>
   </div>
-  <HelloWorld msg="Hello Vue 3 + TypeScript + Vite" />
-  <div class="static-public">
-    Place static files into the <code>/public</code> folder
-    <img style="width:77px;" :src="'./node.png'" >
-  </div> -->
 </template>
 
 <style lang="scss">
@@ -28,32 +239,45 @@
   color: #2c3e50;
   margin-top: 60px;
 }
-body{
-    width:100%;
-    height:100%;
-    background:#fff url(./assets/images/background.jpg);
-    background-repeat: no-repeat;
-    background-size:cover;
-    background-attachment:fixed;
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-width: 1100px;
 }
-/* .logo-box {
-  display: flex;
+
+body {
   width: 100%;
-  justify-content: center;
+  height: 100%;
+  background: #fff url(./assets/images/background.jpg);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-attachment: fixed;
 }
-.logo-box span {
-  width: 74px;
+
+.common-main {
+  margin: 0 auto;
+  margin-top: 30px;
+  width: 980px;
+  height: 100%;
+  background-color: #000;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  padding: 20px;
 }
-.static-public {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+
+.update-desc {
+  &__title {
+    font-weight: bold;
+  }
+
+  &__main {
+    margin: 0;
+    padding: 0;
+    line-height: 25px;
+    list-style: none;
+  }
 }
-.static-public code {
-  background-color: #eee;
-  padding: 2px 4px;
-  margin: 0 4px;
-  border-radius: 4px;
-  color: #304455;
-} */
+
 </style>

@@ -36,6 +36,8 @@ async function createWindow() {
   win = new BrowserWindow({
     title: 'Main window',
     icon: join(ROOT_PATH.public, 'favicon.ico'),
+    minWidth: 1200,
+    minHeight: 900,
     webPreferences: {
       preload,
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
@@ -71,6 +73,11 @@ app.whenReady().then(createWindow)
 app.on('window-all-closed', () => {
   win = null
   if (process.platform !== 'darwin') app.quit()
+})
+
+// 监听打开url的事件，打开默认浏览器
+ipcMain.on('open-url', (event, url) => {
+  shell.openExternal(url) // 打开系统默认浏览器到指定url
 })
 
 app.on('second-instance', () => {
