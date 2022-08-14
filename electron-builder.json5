@@ -6,7 +6,7 @@
   "productName": "新水浒Q传题库大全",
   "asar": true,
   "directories": {
-    "output": "release"
+    "output": "release/${version}"
   },
   "files": [
     "dist"
@@ -26,7 +26,8 @@
         ]
       }
     ],
-    "artifactName": "${productName}_${version}.${ext}"
+    "artifactName": "${productName}_${version}.${ext}",
+    "icon": "build/icons/icon.ico"
   },
   "nsis": {
     "oneClick": false,
