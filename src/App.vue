@@ -33,6 +33,14 @@ const versionData = reactive({
   updateVersionMessage: {}
 });
 
+const handleSendNewQuestion = () => {
+  ipcRenderer.send('open-url','https://docs.qq.com/form/fill/DQ2h6TGVxcXlCc3BN?_w_tencentdocx_form=1#/fill')
+}
+
+const handleJoinQQGroup = () => {
+  ipcRenderer.send('open-url', 'https://qm.qq.com/cgi-bin/qm/qr?k=80jOzciI86vgclIGWpDbD92CFG2MiZxb&jump_from=webapi')
+}
+
 const initClientUpdate = () => {
   const updateVersionMessage: any = versionData.updateVersionMessage;
   const compareVersionRes = Helper.compareVersion(
@@ -53,6 +61,14 @@ const initClientUpdate = () => {
       const getLocalUpdateMsg = localStorage.getItem(`skipUpdateVersion`)
       if (getLocalUpdateMsg === `${updateVersionMessage.versionNum}`) {
         return;
+      }
+      // 对比强制更新版本
+      const compareForceVersionRes = Helper.compareVersion(
+        versionData.currentVersion,
+        updateVersionMessage.forceUpdateVersionNum
+      )
+      if (compareForceVersionRes === -1) {
+        versionData.canCancel = false;
       }
       $confirm(
         updateVersionMessage.desc,
@@ -123,6 +139,7 @@ onMounted(async () => {
         showClose: false,
         confirmButtonText: '立即安装',
         beforeClose: (action, instance, done) => {
+          ipcRenderer.send('update-clitent', 'confirm')
           if (action === 'confirm') {
             done()
             return;
@@ -232,6 +249,11 @@ const handleSearch = _.debounce(() => {
               <el-radio-button :label="4">徐宁</el-radio-button>
               <el-radio-button :label="5">柴进</el-radio-button>
             </el-radio-group>
+          </div>
+          <div class="mt20">
+            <!-- <el-button type="primary">开启自动清空搜索框</el-button> -->
+            <el-button type="success" @click="handleSendNewQuestion">提交题库(收集表)</el-button>
+            <el-button type="danger" @click="handleJoinQQGroup">加入官方Q群</el-button>
           </div>
           <div class="mt20">
             <el-input @input="handleSearch" v-model="currentData.searchString" placeholder="请输入题目任意关键字" clearable>
