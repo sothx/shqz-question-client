@@ -57,7 +57,7 @@ function Http(axiosConfig?: AxiosRequestConfig, extendConfig?: ExtendConfig) {
   }, extendConfig)
 
   const instance = axios.create({
-    baseURL: 'http://127.0.0.1:7001',
+    baseURL: 'https://sh.sothx.com',
     timeout: 30 * 1000, // 最大网络超时30s
     withCredentials: true, // 跨域携带cookie凭证
   })

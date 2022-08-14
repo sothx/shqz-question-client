@@ -2,10 +2,11 @@
  * @see https://www.electron.build/configuration/configuration
  */
 {
-  "appId": "YourAppID",
+  "appId": "com.shqzquestion.app",
+  "productName": "新水浒Q传题库大全",
   "asar": true,
   "directories": {
-    "output": "release/${version}"
+    "output": "release"
   },
   "files": [
     "dist"
