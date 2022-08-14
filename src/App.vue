@@ -238,6 +238,7 @@ const handleSearch = _.debounce(() => {
               <el-radio-button :label="4">赛龙舟</el-radio-button>
               <el-radio-button :label="5">侠义情缘</el-radio-button>
               <el-radio-button :label="6">召唤兽转生</el-radio-button>
+              <el-radio-button :label="7">七夕活动</el-radio-button>
             </el-radio-group>
           </div>
           <div>
@@ -251,9 +252,9 @@ const handleSearch = _.debounce(() => {
             </el-radio-group>
           </div>
           <div class="mt20">
-            <!-- <el-button type="primary">开启自动清空搜索框</el-button> -->
             <el-button type="success" @click="handleSendNewQuestion">提交题库(收集表)</el-button>
             <el-button type="danger" @click="handleJoinQQGroup">加入官方Q群</el-button>
+            <!-- <el-button type="primary">星灵计算器</el-button> -->
           </div>
           <div class="mt20">
             <el-input @input="handleSearch" v-model="currentData.searchString" placeholder="请输入题目任意关键字" clearable>
