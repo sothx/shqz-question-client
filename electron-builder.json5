@@ -11,6 +11,12 @@
   "files": [
     "dist"
   ],
+  "publish": [
+    {
+      "provider": "generic",
+      "url":"http://client-updater.sothx.com/shqz-question-client/"
+    }
+  ],
   "mac": {
     "artifactName": "${productName}_${version}.${ext}",
     "target": [

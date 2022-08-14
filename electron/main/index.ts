@@ -1,6 +1,9 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron'
 import { release } from 'os'
 import { join } from 'path'
+import { autoUpdater } from 'electron-updater'
+import log from 'electron-log'
+
 
 // Disable GPU Acceleration for Windows 7
 if (release().startsWith('6.1')) app.disableHardwareAcceleration()
@@ -45,7 +48,7 @@ async function createWindow() {
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       nodeIntegration: true,
       contextIsolation: false,
-      webSecurity: false,
+      webSecurity: false
     },
   })
 
@@ -81,6 +84,21 @@ ipcMain.on('open-url', (event, url) => {
   shell.openExternal(url) // 打开系统默认浏览器到指定url
 })
 
+// 监听客户端升级事件，开始升级流程
+ipcMain.on('update-clitent', (event, payload) => {
+  // if (app.isPackaged) {
+  //   checkForUpdates()
+  // }
+  // 初始化客户端升级
+  if (payload === 'init') {
+    checkForUpdates()
+  }
+  // 升级完成并重启客户端
+  if (payload === 'confirm') {
+    autoUpdater.quitAndInstall()
+  }
+})
+
 app.on('second-instance', () => {
   if (win) {
     // Focus on the main window if the user tried to open another
@@ -113,3 +131,73 @@ ipcMain.handle('open-win', (event, arg) => {
     // childWindow.webContents.openDevTools({ mode: "undocked", activate: true })
   }
 })
+
+
+
+
+function checkForUpdates() {
+  log.info('Set up event listeners...')
+  // package.json这里已经配置了，不需要额外配置
+  //autoUpdater.setFeedURL('http://client-updater.sothx.com/shqz-question-client/');
+  // 正在检查更新……
+  autoUpdater.on('checking-for-update', () => {
+    log.info('Checking for update...')
+  })
+  // 检测到新版本，正在下载……
+  autoUpdater.on('update-available', (info) => {
+    log.info('Update available.')
+  })
+  // 现在使用的就是最新版本，不用更新
+  autoUpdater.on('update-not-available', (info) => {
+    log.info('Update not available.')
+  })
+  // 检查更新出错
+  autoUpdater.on('error', (err:any) => {
+    log.error('Error in auto-updater.' + err)
+  })
+
+  // 更新下载进度事件
+  autoUpdater.on('download-progress', function (progressObj) {
+    let msg = "Download speed: " + progressObj.bytesPerSecond
+    msg = msg + ' - Downloaded ' + progressObj.percent + '%'
+    msg = msg + ' (' + progressObj.transferred + "/" + progressObj.total + ')'
+    log.info(msg)
+  })
+  autoUpdater.on('update-downloaded', function (info) {
+
+    win?.webContents.send('client-update-downloaded',info)
+    // log.info('Update downloaded.')
+    
+    // // The update will automatically be installed the next time the
+    // // app launches. If you want to, you can force the installation
+    // // now:
+    // const dialogOpts: any = {
+    //   type: 'info',
+    //   buttons: ['Restart', 'Later'],
+    //   title: 'App Update',
+    //   message: process.platform === 'win32' ? info.releaseNotes : info.releaseName,
+    //   detail: `A new version (${info.version}) has been downloaded. Restart the application to apply the updates.`
+    // }
+
+    // dialog.showMessageBox(dialogOpts).then((returnValue) => {
+    //   if (returnValue.response === 0) autoUpdater.quitAndInstall()
+    // })
+
+  });
+
+  // More properties on autoUpdater, see https://www.electron.build/auto-update#AppUpdater
+  //autoUpdater.autoDownload = true
+  //autoUpdater.autoInstallOnAppQuit = true
+
+  // No debugging! Check main.log for details.
+  // Ready? Go!
+  log.info('checkForUpdates() -- begin')
+  try {
+    //autoUpdater.setFeedURL('')
+    autoUpdater.checkForUpdates()
+    //autoUpdater.checkForUpdatesAndNotify()
+  } catch (error) {
+    log.error(error)
+  }
+  log.info('checkForUpdates() -- end')
+}

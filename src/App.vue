@@ -8,6 +8,8 @@ import _ from 'lodash-es'
 
 import type { Action } from 'element-plus'
 
+const fullscreenLoading = ref(false);
+
 const currentData = reactive({
   page: {
     limit: 20,
@@ -62,11 +64,14 @@ const initClientUpdate = () => {
           closeOnPressEscape: false,
           showClose: false,
           cancelButtonText: '跳过当前版本',
-          confirmButtonText: '立即下载',
+          confirmButtonText: '立即升级',
           beforeClose: (action, instance, done) => {
             console.log(instance, 'instance')
             if (action === 'confirm') {
-              ipcRenderer.send('open-url', updateVersionMessage.downloadUrl)
+              ipcRenderer.send('update-clitent', 'init')
+              fullscreenLoading.value = true;
+              done()
+              // ipcRenderer.send('open-url', updateVersionMessage.downloadUrl)
               return;
             }
             if (action === 'cancel') {
@@ -106,6 +111,27 @@ onMounted(async () => {
     })
     throw new Error(err?.message);
   }
+  ipcRenderer.once('client-update-downloaded', (event, info) => {
+    fullscreenLoading.value = false;
+    $confirm(
+      `新水浒Q传题库大全 ver.${info.version} 已经准备好更新包了，点击"立即安装"完成最后一步吧~`,
+      `新版本已经准备好更新了`,
+      {
+        showCancelButton: false,
+        closeOnClickModal: false,
+        closeOnPressEscape: false,
+        showClose: false,
+        confirmButtonText: '立即安装',
+        beforeClose: (action, instance, done) => {
+          if (action === 'confirm') {
+            done()
+            return;
+          }
+          done()
+        }
+      }
+    )
+  })
 })
 
 const getVersionMessage = async () => {
@@ -179,7 +205,7 @@ const handleSearch = _.debounce(() => {
 
 <template>
   <div class="common-layout">
-    <el-container>
+    <el-container v-loading.fullscreen.lock="fullscreenLoading">
       <el-header>
         <div class="common-header">
           <img src="./assets/images/logo.png" />
@@ -279,5 +305,4 @@ body {
     list-style: none;
   }
 }
-
 </style>
