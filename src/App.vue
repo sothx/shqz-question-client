@@ -5,8 +5,9 @@ import * as UsersApi from '@/apis/users'
 import * as Helper from '@/utils/Helper'
 import { ipcRenderer } from 'electron'
 import _ from 'lodash-es'
-
 import type { Action } from 'element-plus'
+import QQStarPetsMiniProgramCode from './assets/images/QQStarPetsMiniProgramCode.png'
+import WechatStarPetsMiniProgramCode from './assets/images/WechatStarPetsMiniProgramCode.jpg'
 
 const fullscreenLoading = ref(false);
 
@@ -20,7 +21,9 @@ const currentData = reactive({
   searchString: '',
   firstRadio: 1,
   secondRadio: 1,
-  questionList: []
+  questionList: [],
+  starPetsDialogVisible: false,
+  currentStarPetsCodeType: 'Wechat',
 })
 
 const { proxy } = getCurrentInstance()!
@@ -33,8 +36,15 @@ const versionData = reactive({
   updateVersionMessage: {}
 });
 
+const handleChangeStarPetsCodeType = (inputType:string) => {
+  currentData.currentStarPetsCodeType = inputType;
+  if (inputType === 'QQ') {
+
+  }
+}
+
 const handleSendNewQuestion = () => {
-  ipcRenderer.send('open-url','https://docs.qq.com/form/fill/DQ2h6TGVxcXlCc3BN?_w_tencentdocx_form=1#/fill')
+  ipcRenderer.send('open-url', 'https://docs.qq.com/form/fill/DQ2h6TGVxcXlCc3BN?_w_tencentdocx_form=1#/fill')
 }
 
 const handleJoinQQGroup = () => {
@@ -203,6 +213,10 @@ const reflushQuetionList = () => {
   })
 }
 
+const handleStarPetsDialog = () => {
+  currentData.starPetsDialogVisible = true
+}
+
 const updateCurrentPage = (currentPage: number) => {
   currentData.page.current = currentPage;
   reflushQuetionList()
@@ -233,7 +247,7 @@ const handleSearch = _.debounce(() => {
           <div>
             <el-radio-group v-model="currentData.firstRadio">
               <el-radio-button :label="1">乡试</el-radio-button>
-              <el-radio-button :label="2">会试</el-radio-button>
+              <el-radio-button :label="2">会试/殿试</el-radio-button>
               <el-radio-button :label="3">屈原寻梦</el-radio-button>
               <el-radio-button :label="4">赛龙舟</el-radio-button>
               <el-radio-button :label="5">侠义情缘</el-radio-button>
@@ -254,7 +268,7 @@ const handleSearch = _.debounce(() => {
           <div class="mt20">
             <el-button type="success" @click="handleSendNewQuestion">提交题库(收集表)</el-button>
             <el-button type="danger" @click="handleJoinQQGroup">加入官方Q群</el-button>
-            <!-- <el-button type="primary">星灵计算器</el-button> -->
+            <el-button type="primary" @click="handleStarPetsDialog">星灵计算器(小程序)</el-button>
           </div>
           <div class="mt20">
             <el-input @input="handleSearch" v-model="currentData.searchString" placeholder="请输入题目任意关键字" clearable>
@@ -275,6 +289,20 @@ const handleSearch = _.debounce(() => {
           </div>
         </div>
       </el-main>
+      <el-dialog v-model="currentData.starPetsDialogVisible" title="星灵计算器(小程序)">
+        <el-container>
+          <el-header>
+            <el-button type="success"  @click="handleChangeStarPetsCodeType('Wechat')" :plain="currentData.currentStarPetsCodeType === 'QQ'">微信小程序</el-button>
+            <el-button type="primary" @click="handleChangeStarPetsCodeType('QQ')" :plain="currentData.currentStarPetsCodeType === 'Wechat'">QQ小程序</el-button>
+          </el-header>
+          <el-main>
+            <div>
+              <img width="258" height="258" :src="currentData.currentStarPetsCodeType === 'QQ' ? QQStarPetsMiniProgramCode: WechatStarPetsMiniProgramCode"/>
+            </div>
+            <div class="mt20">{{ `${currentData.currentStarPetsCodeType === 'QQ' ? 'QQ' : '微信'}扫一扫，即可打开~` }}</div>
+          </el-main>
+        </el-container>
+      </el-dialog>
     </el-container>
   </div>
 </template>
