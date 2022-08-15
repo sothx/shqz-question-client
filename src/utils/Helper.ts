@@ -24,3 +24,5 @@ export const compareVersion = function (version1: string, version2: string) {
   }
   return 0;
 };
+
+export const isClient = !process.env.IS_WEB ? true : false

@@ -44,11 +44,19 @@ const handleChangeStarPetsCodeType = (inputType:string) => {
 }
 
 const handleSendNewQuestion = () => {
-  ipcRenderer.send('open-url', 'https://docs.qq.com/form/fill/DQ2h6TGVxcXlCc3BN?_w_tencentdocx_form=1#/fill')
+  if (Helper.isClient) {
+    ipcRenderer.send('open-url', 'https://docs.qq.com/form/fill/DQ2h6TGVxcXlCc3BN?_w_tencentdocx_form=1#/fill')
+  } else {
+    window.open('https://docs.qq.com/form/fill/DQ2h6TGVxcXlCc3BN?_w_tencentdocx_form=1#/fill')
+  }
 }
 
 const handleJoinQQGroup = () => {
-  ipcRenderer.send('open-url', 'https://qm.qq.com/cgi-bin/qm/qr?k=80jOzciI86vgclIGWpDbD92CFG2MiZxb&jump_from=webapi')
+  if (Helper.isClient) {
+    ipcRenderer.send('open-url', 'https://qm.qq.com/cgi-bin/qm/qr?k=80jOzciI86vgclIGWpDbD92CFG2MiZxb&jump_from=webapi')
+  } else {
+    window.open('https://qm.qq.com/cgi-bin/qm/qr?k=80jOzciI86vgclIGWpDbD92CFG2MiZxb&jump_from=webapi')
+  }
 }
 
 const initClientUpdate = () => {
@@ -119,14 +127,17 @@ const initClientUpdate = () => {
 
 onMounted(async () => {
   try {
-    await Promise.all([
-      getVersionMessage(),
-      getQuestionList({
+    const promiseArr = [getQuestionList({
         type: currentData.firstRadio,
         limit: currentData.page.limit,
         offset: currentData.page.current - 1
-      })
-    ])
+    })]
+
+    if (Helper.isClient) {
+      promiseArr.push(getVersionMessage())
+    }
+
+    await Promise.all(promiseArr)
   } catch (err: Error) {
     $alert('网络连接异常，请检查网络连接是否正常！', '网络异常', {
       confirmButtonText: '刷新重试',
