@@ -248,8 +248,8 @@ const handleSearch = _.debounce(() => {
 <template>
   <div class="common-layout">
     <el-container v-loading.fullscreen.lock="fullscreenLoading">
-      <el-header>
-        <div class="common-header">
+      <el-header class="common-header">
+        <div>
           <img src="./assets/images/logo.png" />
         </div>
       </el-header>
@@ -333,6 +333,10 @@ body {
   margin: 0;
   padding: 0;
   min-width: 1100px;
+}
+
+.common-header{
+  height:100px;
 }
 
 body {
