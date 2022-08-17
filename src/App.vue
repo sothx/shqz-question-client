@@ -59,7 +59,7 @@ const handleJoinQQGroup = () => {
   }
 }
 
-const initClientUpdate = (inputType = null) => {
+const initClientUpdate = (inputType:?string = null) => {
   const updateVersionMessage: any = versionData.updateVersionMessage;
   const compareVersionRes = Helper.compareVersion(
     versionData.currentVersion,
@@ -83,7 +83,7 @@ const initClientUpdate = (inputType = null) => {
     // 接口版本号更新，需要升级版本
     case -1: {
       const getLocalUpdateMsg = localStorage.getItem(`skipUpdateVersion`)
-      if (getLocalUpdateMsg === `${updateVersionMessage.versionNum}`) {
+      if (getLocalUpdateMsg === `${updateVersionMessage.versionNum}` && !inputType) {
         return;
       }
       // 对比强制更新版本
