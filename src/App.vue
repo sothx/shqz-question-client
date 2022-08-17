@@ -59,7 +59,7 @@ const handleJoinQQGroup = () => {
   }
 }
 
-const initClientUpdate = (inputType:?string = null) => {
+const initClientUpdate = (inputType?:string = undefined) => {
   const updateVersionMessage: any = versionData.updateVersionMessage;
   const compareVersionRes = Helper.compareVersion(
     versionData.currentVersion,
