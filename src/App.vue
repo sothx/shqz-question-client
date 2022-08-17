@@ -59,7 +59,7 @@ const handleJoinQQGroup = () => {
   }
 }
 
-const initClientUpdate = () => {
+const initClientUpdate = (inputType = null) => {
   const updateVersionMessage: any = versionData.updateVersionMessage;
   const compareVersionRes = Helper.compareVersion(
     versionData.currentVersion,
@@ -68,10 +68,16 @@ const initClientUpdate = () => {
   switch (compareVersionRes) {
     // 版本号相同，已经是最新版本，不需要升级
     case 0: {
+      if (inputType === 'menu-btn') {
+        $message.success('已经是最新版本，不需要升级~')
+      }
       break;
     }
     // 接口版本号比较旧，不需要升级版本
     case 1: {
+      if (inputType === 'menu-btn') {
+        $message.success('已经是最新版本，不需要升级~')
+      }
       break;
     }
     // 接口版本号更新，需要升级版本
@@ -280,6 +286,7 @@ const handleSearch = _.debounce(() => {
             <el-button type="success" @click="handleSendNewQuestion">提交题库(收集表)</el-button>
             <el-button type="danger" @click="handleJoinQQGroup">加入官方Q群</el-button>
             <el-button type="primary" @click="handleStarPetsDialog">星灵计算器(小程序)</el-button>
+            <el-button :disabled="!Boolean(Object.keys(versionData.updateVersionMessage).length)" @click="initClientUpdate('menu-btn')">检测更新</el-button>
           </div>
           <div class="mt20">
             <el-input @input="handleSearch" v-model="currentData.searchString" placeholder="请输入题目任意关键字" clearable>
