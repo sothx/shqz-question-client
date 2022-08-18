@@ -21,6 +21,8 @@ if (!app.requestSingleInstanceLock()) {
 // Read more on https://www.electronjs.org/docs/latest/tutorial/security
 // process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 
+process.env['IS_CLIENT'] = 'true'
+
 export const ROOT_PATH = {
   // /dist
   dist: join(__dirname, '../..'),
@@ -138,7 +140,7 @@ ipcMain.handle('open-win', (event, arg) => {
 function checkForUpdates() {
   log.info('Set up event listeners...')
   // package.json这里已经配置了，不需要额外配置
-  //autoUpdater.setFeedURL('http://client-updater.sothx.com/shqz-question-client/');
+  // autoUpdater.setFeedURL('http://client-updater.sothx.com/shqz-question-client/');
   // 正在检查更新……
   autoUpdater.on('checking-for-update', () => {
     log.info('Checking for update...')
@@ -154,6 +156,10 @@ function checkForUpdates() {
   // 检查更新出错
   autoUpdater.on('error', (err:any) => {
     log.error('Error in auto-updater.' + err)
+    win?.webContents.send('client-update-message', {
+      type: 'update-error',
+      data: err
+    })
   })
 
   // 更新下载进度事件
@@ -164,8 +170,11 @@ function checkForUpdates() {
     log.info(msg)
   })
   autoUpdater.on('update-downloaded', function (info) {
-
-    win?.webContents.send('client-update-downloaded',info)
+    log.info('Update downloaded.')
+    win?.webContents.send('client-update-message', {
+      type: 'update-downloaded',
+      data: info
+    })
     // log.info('Update downloaded.')
     
     // // The update will automatically be installed the next time the
@@ -186,8 +195,8 @@ function checkForUpdates() {
   });
 
   // More properties on autoUpdater, see https://www.electron.build/auto-update#AppUpdater
-  //autoUpdater.autoDownload = true
-  //autoUpdater.autoInstallOnAppQuit = true
+  // autoUpdater.autoDownload = true
+  // autoUpdater.autoInstallOnAppQuit = true
 
   // No debugging! Check main.log for details.
   // Ready? Go!

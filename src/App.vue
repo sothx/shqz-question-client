@@ -3,11 +3,11 @@ import { ref, getCurrentInstance, onMounted, reactive, watch } from 'vue'
 import * as QuetionsApi from '@/apis/quetions'
 import * as UsersApi from '@/apis/users'
 import * as Helper from '@/utils/Helper'
-import { ipcRenderer } from 'electron'
 import _ from 'lodash-es'
 import type { Action } from 'element-plus'
 import QQStarPetsMiniProgramCode from './assets/images/QQStarPetsMiniProgramCode.png'
 import WechatStarPetsMiniProgramCode from './assets/images/WechatStarPetsMiniProgramCode.jpg'
+let ipcRenderer: Electron.IpcRenderer
 
 const fullscreenLoading = ref(false);
 
@@ -36,7 +36,7 @@ const versionData = reactive({
   updateVersionMessage: {}
 });
 
-const handleChangeStarPetsCodeType = (inputType:string) => {
+const handleChangeStarPetsCodeType = (inputType: string) => {
   currentData.currentStarPetsCodeType = inputType;
   if (inputType === 'QQ') {
 
@@ -59,7 +59,7 @@ const handleJoinQQGroup = () => {
   }
 }
 
-const initClientUpdate = (inputType?:string = undefined) => {
+const initClientUpdate = (inputType?: string = undefined) => {
   const updateVersionMessage: any = versionData.updateVersionMessage;
   const compareVersionRes = Helper.compareVersion(
     versionData.currentVersion,
@@ -89,7 +89,7 @@ const initClientUpdate = (inputType?:string = undefined) => {
       // 对比强制更新版本
       const compareForceVersionRes = Helper.compareVersion(
         versionData.currentVersion,
-        updateVersionMessage.forceUpdateVersionNum
+        updateVersionMessage.forceVersionNum
       )
       if (compareForceVersionRes === -1) {
         versionData.canCancel = false;
@@ -133,10 +133,13 @@ const initClientUpdate = (inputType?:string = undefined) => {
 
 onMounted(async () => {
   try {
+    if (Helper.isClient) {
+      ipcRenderer = (await import('electron')).ipcRenderer
+    }
     const promiseArr = [getQuestionList({
-        type: currentData.firstRadio,
-        limit: currentData.page.limit,
-        offset: currentData.page.current - 1
+      type: currentData.firstRadio,
+      limit: currentData.page.limit,
+      offset: currentData.page.current - 1
     })]
 
     if (Helper.isClient) {
@@ -154,28 +157,57 @@ onMounted(async () => {
     })
     throw new Error(err?.message);
   }
-  ipcRenderer.once('client-update-downloaded', (event, info) => {
-    fullscreenLoading.value = false;
-    $confirm(
-      `新水浒Q传题库大全 ver.${info.version} 已经准备好更新包了，点击"立即安装"完成最后一步吧~`,
-      `新版本已经准备好更新了`,
-      {
-        showCancelButton: false,
-        closeOnClickModal: false,
-        closeOnPressEscape: false,
-        showClose: false,
-        confirmButtonText: '立即安装',
-        beforeClose: (action, instance, done) => {
-          ipcRenderer.send('update-clitent', 'confirm')
-          if (action === 'confirm') {
-            done()
-            return;
+  if (Helper.isClient) {
+    ipcRenderer.once('client-update-message', (event, inputPayload) => {
+      const { type, data } = inputPayload;
+      fullscreenLoading.value = false;
+      // 如果下载完成
+      if (type === 'update-downloaded') {
+        $confirm(
+          `新水浒Q传题库大全 ver.${data.version} 已经准备好更新包了，点击"立即安装"完成最后一步吧~`,
+          `新版本已经准备好更新了`,
+          {
+            showCancelButton: false,
+            closeOnClickModal: false,
+            closeOnPressEscape: false,
+            showClose: false,
+            confirmButtonText: '立即安装',
+            beforeClose: (action, instance, done) => {
+              ipcRenderer.send('update-clitent', 'confirm')
+              if (action === 'confirm') {
+                done()
+                return;
+              }
+              done()
+            }
           }
-          done()
-        }
+        )
       }
-    )
-  })
+      // 如果出现异常
+      if (type === 'update-error') {
+        const updateVersionMessage: any = versionData.updateVersionMessage;
+        $confirm(
+          `由于系统权限或者其他未知原因，更新失败了，点击"手动更新"下载最新安装包进行升级吧~`,
+          `系统更新错误`,
+          {
+            showCancelButton: false,
+            closeOnClickModal: false,
+            closeOnPressEscape: false,
+            showClose: false,
+            confirmButtonText: '手动更新',
+            beforeClose: (action, instance, done) => {
+              if (action === 'confirm') {
+                ipcRenderer.send('open-url', updateVersionMessage.downloadUrl)
+                return;
+              }
+              done()
+            }
+          }
+        )
+      }
+    })
+  }
+
 })
 
 const getVersionMessage = async () => {
@@ -286,7 +318,8 @@ const handleSearch = _.debounce(() => {
             <el-button type="success" @click="handleSendNewQuestion">提交题库(收集表)</el-button>
             <el-button type="danger" @click="handleJoinQQGroup">加入官方Q群</el-button>
             <el-button type="primary" @click="handleStarPetsDialog">星灵计算器(小程序)</el-button>
-            <el-button type="info" :disabled="!Boolean(Object.keys(versionData.updateVersionMessage).length)" @click="initClientUpdate('menu-btn')">检测更新</el-button>
+            <el-button type="info" v-if="Helper.isClient" :disabled="!Boolean(Object.keys(versionData.updateVersionMessage).length)"
+              @click="initClientUpdate('menu-btn')">检测更新</el-button>
           </div>
           <div class="mt20">
             <el-input @input="handleSearch" v-model="currentData.searchString" placeholder="请输入题目任意关键字" clearable>
@@ -310,12 +343,15 @@ const handleSearch = _.debounce(() => {
       <el-dialog v-model="currentData.starPetsDialogVisible" title="星灵计算器(小程序)">
         <el-container>
           <el-header>
-            <el-button type="success"  @click="handleChangeStarPetsCodeType('Wechat')" :plain="currentData.currentStarPetsCodeType === 'QQ'">微信小程序</el-button>
-            <el-button type="primary" @click="handleChangeStarPetsCodeType('QQ')" :plain="currentData.currentStarPetsCodeType === 'Wechat'">QQ小程序</el-button>
+            <el-button type="success" @click="handleChangeStarPetsCodeType('Wechat')"
+              :plain="currentData.currentStarPetsCodeType === 'QQ'">微信小程序</el-button>
+            <el-button type="primary" @click="handleChangeStarPetsCodeType('QQ')"
+              :plain="currentData.currentStarPetsCodeType === 'Wechat'">QQ小程序</el-button>
           </el-header>
           <el-main>
             <div>
-              <img width="258" height="258" :src="currentData.currentStarPetsCodeType === 'QQ' ? QQStarPetsMiniProgramCode: WechatStarPetsMiniProgramCode"/>
+              <img width="258" height="258"
+                :src="currentData.currentStarPetsCodeType === 'QQ' ? QQStarPetsMiniProgramCode : WechatStarPetsMiniProgramCode" />
             </div>
             <div class="mt20">{{ `${currentData.currentStarPetsCodeType === 'QQ' ? 'QQ' : '微信'}扫一扫，即可打开~` }}</div>
           </el-main>
@@ -342,8 +378,8 @@ body {
   min-width: 1100px;
 }
 
-.common-header{
-  height:100px;
+.common-header {
+  height: 100px;
 }
 
 body {
