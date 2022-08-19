@@ -350,7 +350,7 @@ const handleSearch = _.debounce(() => {
               :disabled="!Boolean(Object.keys(versionData.updateVersionMessage).length)"
               @click="initClientUpdate('menu-btn')">检测更新</el-button>
               <el-button type="warning" v-if="!Helper.isClient"
-              @click="initClientUpdate('menu-btn')">下载客户端</el-button>
+              @click="initSetupClientModal()">下载客户端</el-button>
           </div>
           <div class="mt20">
             <el-input @input="handleSearch" v-model="currentData.searchString" placeholder="请输入题目任意关键字" clearable>
