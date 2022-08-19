@@ -180,25 +180,25 @@ const handleClientUpdateMessage = () => {
 }
 
 const initSetupClientModal = () => {
-      const updateVersionMessage: any = versionData.updateVersionMessage;
-      $confirm(
-        `水Q题库大全客户端版本已上线，点击"立即下载"按钮即可体验~`,
-        `Windows客户端版本上线提醒`,
-        {
-          showCancelButton: false,
-          closeOnClickModal: false,
-          closeOnPressEscape: false,
-          showClose: false,
-          cancelButtonText: '下次再说',
-          confirmButtonText: '立即下载',
-          beforeClose: (action, instance, done) => {
-            if (action === 'confirm') {
-              window.open(updateVersionMessage.downloadUrl)
-            }
-            done()
-          }
+  const updateVersionMessage: any = versionData.updateVersionMessage;
+  $confirm(
+    `水Q题库大全客户端已上线，点击"立即下载"按钮即可体验~`,
+    `客户端版本上线提醒`,
+    {
+      showCancelButton: false,
+      closeOnClickModal: false,
+      closeOnPressEscape: false,
+      showClose: false,
+      cancelButtonText: '下次再说',
+      confirmButtonText: '立即下载',
+      beforeClose: (action, instance, done) => {
+        if (action === 'confirm') {
+          window.open(updateVersionMessage.downloadUrl)
         }
-      )
+        done()
+      }
+    }
+  )
 }
 
 
@@ -213,11 +213,7 @@ onMounted(async () => {
       type: currentData.firstRadio,
       limit: currentData.page.limit,
       offset: currentData.page.current - 1
-    })]
-
-    if (Helper.isClient) {
-      promiseArr.push(getVersionMessage())
-    }
+    }), getVersionMessage()]
 
     await Promise.all(promiseArr)
   } catch (err: Error) {
@@ -349,8 +345,7 @@ const handleSearch = _.debounce(() => {
             <el-button type="info" v-if="Helper.isClient"
               :disabled="!Boolean(Object.keys(versionData.updateVersionMessage).length)"
               @click="initClientUpdate('menu-btn')">检测更新</el-button>
-              <el-button type="warning" v-if="!Helper.isClient"
-              @click="initSetupClientModal()">下载客户端</el-button>
+            <el-button type="warning" v-if="!Helper.isClient" @click="initSetupClientModal()">下载客户端</el-button>
           </div>
           <div class="mt20">
             <el-input @input="handleSearch" v-model="currentData.searchString" placeholder="请输入题目任意关键字" clearable>
