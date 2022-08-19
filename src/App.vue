@@ -128,6 +128,79 @@ const initClientUpdate = (inputType?: string = undefined) => {
   }
 }
 
+const handleClientUpdateMessage = () => {
+  ipcRenderer.once('client-update-message', (event, inputPayload) => {
+    const { type, data } = inputPayload;
+    fullscreenLoading.value = false;
+    // 如果下载完成
+    if (type === 'update-downloaded') {
+      $confirm(
+        `新水浒Q传题库大全 ver.${data.version} 已经准备好更新包了，点击"立即安装"完成最后一步吧~`,
+        `新版本已经准备好更新了`,
+        {
+          showCancelButton: false,
+          closeOnClickModal: false,
+          closeOnPressEscape: false,
+          showClose: false,
+          confirmButtonText: '立即安装',
+          beforeClose: (action, instance, done) => {
+            ipcRenderer.send('update-clitent', 'confirm')
+            if (action === 'confirm') {
+              done()
+              return;
+            }
+            done()
+          }
+        }
+      )
+    }
+    // 如果出现异常
+    if (type === 'update-error') {
+      const updateVersionMessage: any = versionData.updateVersionMessage;
+      $confirm(
+        `由于系统权限或者其他未知原因，更新失败了，点击"手动更新"下载最新安装包进行升级吧~`,
+        `系统更新错误`,
+        {
+          showCancelButton: false,
+          closeOnClickModal: false,
+          closeOnPressEscape: false,
+          showClose: false,
+          confirmButtonText: '手动更新',
+          beforeClose: (action, instance, done) => {
+            if (action === 'confirm') {
+              ipcRenderer.send('open-url', updateVersionMessage.downloadUrl)
+              return;
+            }
+            done()
+          }
+        }
+      )
+    }
+  })
+}
+
+const initSetupClientModal = () => {
+      const updateVersionMessage: any = versionData.updateVersionMessage;
+      $confirm(
+        `水Q题库大全客户端版本已上线，点击"立即下载"按钮即可体验~`,
+        `Windows客户端版本上线提醒`,
+        {
+          showCancelButton: false,
+          closeOnClickModal: false,
+          closeOnPressEscape: false,
+          showClose: false,
+          cancelButtonText: '下次再说',
+          confirmButtonText: '立即下载',
+          beforeClose: (action, instance, done) => {
+            if (action === 'confirm') {
+              window.open(updateVersionMessage.downloadUrl)
+            }
+            done()
+          }
+        }
+      )
+}
+
 
 
 
@@ -158,54 +231,9 @@ onMounted(async () => {
     throw new Error(err?.message);
   }
   if (Helper.isClient) {
-    ipcRenderer.once('client-update-message', (event, inputPayload) => {
-      const { type, data } = inputPayload;
-      fullscreenLoading.value = false;
-      // 如果下载完成
-      if (type === 'update-downloaded') {
-        $confirm(
-          `新水浒Q传题库大全 ver.${data.version} 已经准备好更新包了，点击"立即安装"完成最后一步吧~`,
-          `新版本已经准备好更新了`,
-          {
-            showCancelButton: false,
-            closeOnClickModal: false,
-            closeOnPressEscape: false,
-            showClose: false,
-            confirmButtonText: '立即安装',
-            beforeClose: (action, instance, done) => {
-              ipcRenderer.send('update-clitent', 'confirm')
-              if (action === 'confirm') {
-                done()
-                return;
-              }
-              done()
-            }
-          }
-        )
-      }
-      // 如果出现异常
-      if (type === 'update-error') {
-        const updateVersionMessage: any = versionData.updateVersionMessage;
-        $confirm(
-          `由于系统权限或者其他未知原因，更新失败了，点击"手动更新"下载最新安装包进行升级吧~`,
-          `系统更新错误`,
-          {
-            showCancelButton: false,
-            closeOnClickModal: false,
-            closeOnPressEscape: false,
-            showClose: false,
-            confirmButtonText: '手动更新',
-            beforeClose: (action, instance, done) => {
-              if (action === 'confirm') {
-                ipcRenderer.send('open-url', updateVersionMessage.downloadUrl)
-                return;
-              }
-              done()
-            }
-          }
-        )
-      }
-    })
+    handleClientUpdateMessage()
+  } else {
+    initSetupClientModal()
   }
 
 })
@@ -318,8 +346,11 @@ const handleSearch = _.debounce(() => {
             <el-button type="success" @click="handleSendNewQuestion">提交题库(收集表)</el-button>
             <el-button type="danger" @click="handleJoinQQGroup">加入官方Q群</el-button>
             <el-button type="primary" @click="handleStarPetsDialog">星灵计算器(小程序)</el-button>
-            <el-button type="info" v-if="Helper.isClient" :disabled="!Boolean(Object.keys(versionData.updateVersionMessage).length)"
+            <el-button type="info" v-if="Helper.isClient"
+              :disabled="!Boolean(Object.keys(versionData.updateVersionMessage).length)"
               @click="initClientUpdate('menu-btn')">检测更新</el-button>
+              <el-button type="warning" v-if="!Helper.isClient"
+              @click="initClientUpdate('menu-btn')">下载客户端</el-button>
           </div>
           <div class="mt20">
             <el-input @input="handleSearch" v-model="currentData.searchString" placeholder="请输入题目任意关键字" clearable>
