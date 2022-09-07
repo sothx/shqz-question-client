@@ -185,10 +185,10 @@ const initSetupClientModal = () => {
     `水Q题库大全客户端已上线，点击"立即下载"按钮即可体验~`,
     `客户端版本上线提醒`,
     {
-      showCancelButton: false,
-      closeOnClickModal: false,
-      closeOnPressEscape: false,
-      showClose: false,
+      showCancelButton: true,
+      closeOnClickModal: true,
+      closeOnPressEscape: true,
+      showClose: true,
       cancelButtonText: '下次再说',
       confirmButtonText: '立即下载',
       beforeClose: (action, instance, done) => {
@@ -326,6 +326,7 @@ const handleSearch = _.debounce(() => {
               <el-radio-button :label="5">侠义情缘</el-radio-button>
               <el-radio-button :label="6">召唤兽转生</el-radio-button>
               <el-radio-button :label="7">七夕活动</el-radio-button>
+              <el-radio-button :label="8">如何成为学霸</el-radio-button>
             </el-radio-group>
           </div>
           <div>

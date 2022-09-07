@@ -21,8 +21,6 @@ if (!app.requestSingleInstanceLock()) {
 // Read more on https://www.electronjs.org/docs/latest/tutorial/security
 // process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 
-process.env['IS_CLIENT'] = 'true'
-
 export const ROOT_PATH = {
   // /dist
   dist: join(__dirname, '../..'),
@@ -97,7 +95,7 @@ ipcMain.on('update-clitent', (event, payload) => {
   }
   // 升级完成并重启客户端
   if (payload === 'confirm') {
-    autoUpdater.quitAndInstall()
+    autoUpdater.quitAndInstall(true,true)
   }
 })
 
