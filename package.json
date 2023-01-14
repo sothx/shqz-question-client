@@ -1,6 +1,6 @@
 {
   "name": "shqz-question",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "main": "dist/electron/main/index.js",
   "description": "新水浒Q传题库大全、科举题库、活动题库。",
   "author": "清欢 <i@sothx.com>",

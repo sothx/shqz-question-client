@@ -319,7 +319,7 @@ const handleSearch = _.debounce(() => {
         <div class="common-main">
           <div>
             <el-radio-group v-model="currentData.firstRadio">
-              <el-radio-button :label="1">乡试</el-radio-button>
+              <el-radio-button :label="1">乡试/猜灯谜</el-radio-button>
               <el-radio-button :label="2">会试/殿试</el-radio-button>
               <el-radio-button :label="3">屈原寻梦</el-radio-button>
               <el-radio-button :label="4">赛龙舟</el-radio-button>
