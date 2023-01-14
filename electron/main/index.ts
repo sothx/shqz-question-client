@@ -1,8 +1,9 @@
-import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, dialog, Menu } from 'electron'
 import { release } from 'os'
 import { join } from 'path'
 import { autoUpdater } from 'electron-updater'
 import log from 'electron-log'
+import { ApplicationMenu } from '../../config/index'
 
 
 // Disable GPU Acceleration for Windows 7
@@ -52,6 +53,8 @@ async function createWindow() {
     },
   })
 
+  applicationMenuReady(win)
+
   if (app.isPackaged) {
     win.loadFile(indexHtml)
   } else {
@@ -70,6 +73,11 @@ async function createWindow() {
     if (url.startsWith('https:')) shell.openExternal(url)
     return { action: 'deny' }
   })
+}
+
+async function applicationMenuReady(inputWin:any) {
+  const appMenu = Menu.buildFromTemplate(ApplicationMenu(win));
+  Menu.setApplicationMenu(appMenu);
 }
 
 app.whenReady().then(createWindow)

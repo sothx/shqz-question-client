@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, getCurrentInstance, onMounted, reactive, watch } from 'vue'
+import { ref, getCurrentInstance, onMounted, reactive, watch, onUnmounted } from 'vue'
 import * as QuetionsApi from '@/apis/quetions'
 import * as UsersApi from '@/apis/users'
 import * as Helper from '@/utils/Helper'
@@ -59,7 +59,7 @@ const handleJoinQQGroup = () => {
   }
 }
 
-const initClientUpdate = (inputType?: string = undefined) => {
+const initClientUpdate = (inputType?: string) => {
   const updateVersionMessage: any = versionData.updateVersionMessage;
   const compareVersionRes = Helper.compareVersion(
     versionData.currentVersion,
@@ -216,7 +216,7 @@ onMounted(async () => {
     }), getVersionMessage()]
 
     await Promise.all(promiseArr)
-  } catch (err: Error) {
+  } catch (err: any) {
     $alert('网络连接异常，请检查网络连接是否正常！', '网络异常', {
       confirmButtonText: '刷新重试',
       showClose: false,
@@ -234,6 +234,14 @@ onMounted(async () => {
 
 })
 
+onUnmounted(async () => {
+  ipcRenderer.removeListener('client-menu-check-update', () => {
+    
+  })
+})
+
+
+
 const getVersionMessage = async () => {
   const [resErr, res] = await $to(UsersApi.getQuestionClientBersion())
   if (resErr) {
@@ -242,7 +250,13 @@ const getVersionMessage = async () => {
   switch ((res as any).statusCode) {
     case '000000': {
       versionData.updateVersionMessage = res.data;
-      initClientUpdate()
+      // 如果是客户端，则初始化客户端升级流程
+      if (Helper.isClient) {
+        initClientUpdate()
+        ipcRenderer.on('client-menu-check-update', (event, inputPayload) => {
+          initClientUpdate('menu-btn')
+        })
+      }
       break;
     }
     default: {
