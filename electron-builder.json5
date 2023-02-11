@@ -30,6 +30,10 @@
         "arch": [
           "x64"
         ]
+      },
+      {
+        "target":"msi",
+        "arch":["x64"]
       }
     ],
     "artifactName": "${productName}_${version}.${ext}",
@@ -38,6 +42,7 @@
   "nsis": {
     "oneClick": false,
     "perMachine": false,
+    "language":"2052",
     "allowToChangeInstallationDirectory": true,
     "deleteAppDataOnUninstall": false
   }

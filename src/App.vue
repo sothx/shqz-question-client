@@ -212,7 +212,7 @@ onMounted(async () => {
     const promiseArr = [getQuestionList({
       type: currentData.firstRadio,
       limit: currentData.page.limit,
-      offset: currentData.page.current - 1
+      offset: currentData.page.limit * (currentData.page.current - 1),
     }), getVersionMessage()]
 
     await Promise.all(promiseArr)
@@ -292,7 +292,7 @@ const reflushQuetionList = () => {
   getQuestionList({
     type: currentData.firstRadio,
     limit: currentData.page.limit,
-    offset: currentData.page.current - 1,
+    offset: currentData.page.limit * (currentData.page.current - 1),
     queryString: currentData.searchString,
     ...currentData.firstRadio === 5 ? {
       heroType: currentData.secondRadio
