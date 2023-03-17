@@ -179,6 +179,14 @@ const handleClientUpdateMessage = () => {
   })
 }
 
+const initConcatUs = () => {
+  if (Helper.isClient) {
+    ipcRenderer.send('open-url', 'tencent://AddContact/?fromId=45&fromSubId=1&subcmd=all&uin=730317940&website=www.sothx.com')
+  } else {
+    window.open('tencent://AddContact/?fromId=45&fromSubId=1&subcmd=all&uin=730317940&website=www.sothx.com')
+  }
+}
+
 const initSetupClientModal = () => {
   const updateVersionMessage: any = versionData.updateVersionMessage;
   $confirm(
@@ -357,6 +365,7 @@ const handleSearch = _.debounce(() => {
             <el-button type="success" @click="handleSendNewQuestion">提交题库(收集表)</el-button>
             <el-button type="danger" @click="handleJoinQQGroup">加入官方Q群</el-button>
             <el-button type="primary" @click="handleStarPetsDialog">星灵计算器(小程序)</el-button>
+            <el-button type="warning" @click="initConcatUs()">联系作者</el-button>
             <el-button type="info" v-if="Helper.isClient"
               :disabled="!Boolean(Object.keys(versionData.updateVersionMessage).length)"
               @click="initClientUpdate('menu-btn')">检测更新</el-button>
@@ -420,7 +429,7 @@ body {
 }
 
 .common-header {
-  height: 100px;
+  height: 160px;
 }
 
 body {
