@@ -349,6 +349,7 @@ const handleSearch = _.debounce(() => {
               <el-radio-button :label="6">召唤兽转生</el-radio-button>
               <el-radio-button :label="7">七夕活动</el-radio-button>
               <el-radio-button :label="8">如何成为学霸</el-radio-button>
+              <el-radio-button :label="9">万圣狂欢</el-radio-button>
             </el-radio-group>
           </div>
           <div>
