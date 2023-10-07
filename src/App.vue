@@ -53,9 +53,9 @@ const handleSendNewQuestion = () => {
 
 const handleJoinQQGroup = () => {
   if (Helper.isClient) {
-    ipcRenderer.send('open-url', 'https://qm.qq.com/cgi-bin/qm/qr?k=80jOzciI86vgclIGWpDbD92CFG2MiZxb&jump_from=webapi')
+    ipcRenderer.send('open-url', 'https://qm.qq.com/cgi-bin/qm/qr?k=PrZLZggDe-FFfwQzfyMlFXFHu08FMFdQ&jump_from=webapi&authKey=LXRskpfWYUsaz4tZhgXRyDwfLIP+17/bfY38wYiJ7WTwaUaXNdHtdWg/Fox/1fBL')
   } else {
-    window.open('https://qm.qq.com/cgi-bin/qm/qr?k=80jOzciI86vgclIGWpDbD92CFG2MiZxb&jump_from=webapi')
+    window.open('https://qm.qq.com/cgi-bin/qm/qr?k=PrZLZggDe-FFfwQzfyMlFXFHu08FMFdQ&jump_from=webapi&authKey=LXRskpfWYUsaz4tZhgXRyDwfLIP+17/bfY38wYiJ7WTwaUaXNdHtdWg/Fox/1fBL')
   }
 }
 
@@ -185,6 +185,10 @@ const initConcatUs = () => {
   } else {
     window.open('tencent://AddContact/?fromId=45&fromSubId=1&subcmd=all&uin=730317940&website=www.sothx.com')
   }
+}
+
+const initDownloadXshClientModal = () => {
+  
 }
 
 const initSetupClientModal = () => {
@@ -364,13 +368,14 @@ const handleSearch = _.debounce(() => {
           </div>
           <div class="mt20">
             <el-button type="success" @click="handleSendNewQuestion">提交题库(收集表)</el-button>
-            <el-button type="danger" @click="handleJoinQQGroup">加入官方Q群</el-button>
+            <el-button type="danger" @click="handleJoinQQGroup">加入贴吧Q群</el-button>
             <el-button type="primary" @click="handleStarPetsDialog">星灵计算器(小程序)</el-button>
             <el-button type="warning" @click="initConcatUs()">联系作者</el-button>
             <el-button type="info" v-if="Helper.isClient"
               :disabled="!Boolean(Object.keys(versionData.updateVersionMessage).length)"
               @click="initClientUpdate('menu-btn')">检测更新</el-button>
             <el-button type="warning" v-if="!Helper.isClient" @click="initSetupClientModal()">下载客户端</el-button>
+            <!-- <el-button type="danger" plain v-if="Helper.isClient" @click="initSetupClientModal()">下载水Q客户端</el-button> -->
           </div>
           <div class="mt20">
             <el-input @input="handleSearch" v-model="currentData.searchString" placeholder="请输入题目任意关键字" clearable>
